@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.manifest
+*.spec
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project outputs
+RESULTS_DIR/
+PROMPTS_DIR/
+
+# Data files
+*.xlsx
+~$*.xlsx
+
+# Logs
+*.log
+
+# Caches
+.cache/
+.ipynb_checkpoints/
+
