@@ -48,7 +48,7 @@ class SonarReasoningAPIClimateRiskDataCollector:
         
         # API configuration
         self.api_url = "https://api.perplexity.ai/chat/completions"
-        self.model = "sonar-deep-research"
+        self.model = "sonar"
         
     def _load_companies_data(self) -> pd.DataFrame:
         """Load and clean company data from the Excel file."""
@@ -173,24 +173,73 @@ class SonarReasoningAPIClimateRiskDataCollector:
         5. ONLY return URLs that are directly visible in the search results
 
         WHAT TO LOOK FOR IN SEARCH RESULTS:
-        - Direct links to PDF documents
+        - Direct links to PDF documents (especially policy documents, manuals, reports)
         - Links to HTML pages containing documents
-        - SEC EDGAR filing URLs
+        - SEC EDGAR filing URLs (10-K, 10-Q, 8-K, DEF 14A)
         - Company investor relations page URLs
+        - Corporate governance and policy pages
+        - Sustainability and ESG dedicated sections
+        - Risk management and business continuity pages
+        - Supply chain and procurement policy pages
+        - HSE (Health, Safety, Environment) documentation
+        - IT and information security policy pages
+        - Real estate and asset management pages
+        - Press release and communication pages
         - Any URLs that lead to actual documents
         - URLs mentioned in search result snippets
 
         DOCUMENT TYPES TO PRIORITIZE (if found in search results):
-        - Annual reports (10-K, Annual Report)
+        
+        CORE FINANCIAL & REGULATORY:
+        - Annual reports (10-K, 20-F, Annual Report)
         - Quarterly reports (10-Q)
-        - Sustainability/ESG reports
         - Proxy statements (DEF 14A)
         - Current reports (8-K)
-        - Investor presentations
+        - Insurance summaries and risk assessments
+        
+        SUSTAINABILITY & CLIMATE:
+        - Sustainability/ESG reports
+        - TCFD reports (Task Force on Climate-related Financial Disclosures)
+        - ISSB reports (International Sustainability Standards Board)
+        - CSRD reports (Corporate Sustainability Reporting Directive)
+        - CDP responses (Carbon Disclosure Project)
+        - CDP Water responses
         - Climate risk disclosures
-        - TCFD reports
-        - GRI reports
-        - CDP responses
+        - Assurance statements for sustainability
+        
+        BUSINESS CONTINUITY & OPERATIONS:
+        - BCP/DR (Business Continuity Plan/Disaster Recovery)
+        - Crisis communications policies
+        - Operations manuals and procedures
+        - Engineering standards
+        - Internal controls documentation
+        
+        HEALTH, SAFETY & ENVIRONMENT:
+        - HSE manuals (Health, Safety, Environment)
+        - Environmental policies
+        - Safety procedures and standards
+        
+        SUPPLY CHAIN & PROCUREMENT:
+        - Supplier/contracts documentation
+        - Procurement policies
+        - Supplier code of conduct
+        - Supply chain sustainability reports
+        
+        TECHNOLOGY & POLICIES:
+        - IT policies and procedures
+        - Information security policies
+        - Data protection policies
+        
+        REAL ESTATE & ASSETS:
+        - Real estate policies
+        - Property management procedures
+        - Asset management documentation
+        
+        COMMUNICATIONS:
+        - Press releases
+        - Website content
+        - Investor presentations
+        - Corporate communications policies
 
         OUTPUT REQUIREMENTS:
         - Extract ONLY URLs found in search results
