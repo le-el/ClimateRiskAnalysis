@@ -539,6 +539,11 @@ class SonarReasoningAPIClimateRiskDataCollector:
         
         return str(response_file)
     
+    def is_company_processed(self, isin: str) -> bool:
+        """Check if a company has already been processed by checking if JSON file exists."""
+        json_file = self.json_dir / f"{isin}.json"
+        return json_file.exists()
+    
     def collect_data_for_company(self, company_info: Dict[str, Any]) -> bool:
         """Collect data for a single company using sonar-reasoning API."""
         print(f"\nCollecting data for {company_info['company_name']} ({company_info['isin']})...")
@@ -559,24 +564,51 @@ class SonarReasoningAPIClimateRiskDataCollector:
         
         return len(urls_data) > 0
     
-    def collect_data_for_all_companies(self, delay: float = 2.0) -> Dict[str, bool]:
-        """Collect data for all companies using sonar-deep-research API."""
+    def collect_data_for_all_companies(self, delay: float = 0.0) -> Dict[str, bool]:
+        """Collect data for all companies using sonar-deep-research API.
+        
+        Automatically skips companies that have already been processed (resume capability).
+        """
         results = {}
         
         print(f"Starting data collection for {len(self.companies_df)} companies using {self.model} model...")
-        print(f"API delay between calls: {delay} seconds")
         
-        for i, (_, row) in enumerate(self.companies_df.iterrows()):
+        # Check which companies are already processed
+        processed_count = 0
+        remaining_companies = []
+        for idx, row in self.companies_df.iterrows():
+            company_info = self._extract_company_info(row)
+            if self.is_company_processed(company_info['isin']):
+                processed_count += 1
+                results[company_info['isin']] = True
+                print(f"Skipping {company_info['company_name']} ({company_info['isin']}) - already processed")
+            else:
+                remaining_companies.append((idx, row))
+        
+        print(f"\nResume status: {processed_count} already processed, {len(remaining_companies)} remaining")
+        print(f"Starting from company {processed_count + 1} of {len(self.companies_df)}\n")
+        
+        # Process remaining companies
+        for i, (idx, row) in enumerate(remaining_companies):
             try:
                 company_info = self._extract_company_info(row)
+                current_index = processed_count + i + 1
+                print(f"[{current_index}/{len(self.companies_df)}] Processing {company_info['company_name']} ({company_info['isin']})...")
+                
                 success = self.collect_data_for_company(company_info)
                 results[company_info['isin']] = success
                 
-                # Add delay between API calls to respect rate limits
-                if i < len(self.companies_df) - 1:  # Don't delay after last call
+                # Add delay between API calls if specified (default is 0)
+                if delay > 0 and i < len(remaining_companies) - 1:  # Don't delay after last call
                     print(f"Waiting {delay} seconds before next API call...")
                     time.sleep(delay)
                     
+            except KeyboardInterrupt:
+                print(f"\n\nInterrupted! Progress saved. Processed {i + 1} companies in this session.")
+                print(f"Total processed: {processed_count + i + 1} of {len(self.companies_df)}")
+                print(f"Remaining: {len(remaining_companies) - i - 1} companies")
+                print("You can restart the script to resume from where it stopped.")
+                raise
             except Exception as e:
                 print(f"Error processing company {row['NAME']}: {e}")
                 results[row['Type']] = False
@@ -617,7 +649,9 @@ def main():
     print("\nStarting API data collection...")
     print("Note: sonar-deep-research model may take 2-3 minutes per company due to complex reasoning")
     print("Timeout set to 120 seconds")
-    results = collector.collect_data_for_all_companies(delay=2.0)
+    print("Resume capability: Script will automatically skip already processed companies")
+    print("Press Ctrl+C to interrupt and resume later")
+    results = collector.collect_data_for_all_companies(delay=0.0)
     
     # Print results
     successful = sum(1 for success in results.values() if success)
