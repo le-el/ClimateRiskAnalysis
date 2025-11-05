@@ -24,7 +24,7 @@ import re
 from dotenv import load_dotenv
 
 class SonarReasoningAPIClimateRiskDataCollector:
-    def __init__(self, companies_file: str = "20Companies.xlsx", 
+    def __init__(self, companies_file: str = "MSCIACWIRI.xlsx", 
                  prompts_dir: str = "PROMPTS_DIR", 
                  results_dir: str = "RESULTS_DIR",
                  api_key: Optional[str] = None):
@@ -39,6 +39,14 @@ class SonarReasoningAPIClimateRiskDataCollector:
         # Create directories
         self.prompts_dir.mkdir(exist_ok=True)
         self.results_dir.mkdir(exist_ok=True)
+        
+        # Create subdirectories for different file types
+        self.json_dir = self.results_dir / "json"
+        self.txt_dir = self.results_dir / "txt"
+        self.csv_dir = self.results_dir / "csv"
+        self.json_dir.mkdir(exist_ok=True)
+        self.txt_dir.mkdir(exist_ok=True)
+        self.csv_dir.mkdir(exist_ok=True)
         
         # Load company data
         self.companies_df = self._load_companies_data()
@@ -325,7 +333,7 @@ class SonarReasoningAPIClimateRiskDataCollector:
             content = response['choices'][0]['message']['content']
             
             # Save raw response for debugging
-            debug_file = self.results_dir / f"{company_info['isin']}_raw_response.txt"
+            debug_file = self.txt_dir / f"{company_info['isin']}.txt"
             with open(debug_file, 'w', encoding='utf-8') as f:
                 f.write("=== RAW API RESPONSE ===\n")
                 f.write(f"Response structure: {list(response.keys())}\n")
@@ -516,14 +524,14 @@ class SonarReasoningAPIClimateRiskDataCollector:
         isin = company_info['isin']
         
         # Save raw API response
-        response_file = self.results_dir / f"{isin}_sonar_reasoning_response.json"
+        response_file = self.json_dir / f"{isin}.json"
         with open(response_file, 'w', encoding='utf-8') as f:
             json.dump(response, f, indent=2, ensure_ascii=False)
         
         # Save processed URLs as CSV
         if urls_data:
             urls_df = pd.DataFrame(urls_data)
-            csv_file = self.results_dir / f"{isin}_sonar_reasoning_data_sources.csv"
+            csv_file = self.csv_dir / f"{isin}.csv"
             urls_df.to_csv(csv_file, index=False, encoding='utf-8')
             print(f"Saved {len(urls_data)} URLs to {csv_file}")
         else:
